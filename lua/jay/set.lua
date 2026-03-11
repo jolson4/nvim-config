@@ -65,7 +65,7 @@ vim.opt.colorcolumn = ""
 function OpenGitHubFile()
     local relative_path = vim.fn.expand('%:.')
 
-    local url = string.format('https://github.com/Asana/codez/blob/next-master/%s',
+    local url = string.format('https://github.com/tryretool/retool_development/blob/dev/%s',
         relative_path
     )
     -- DEBUG

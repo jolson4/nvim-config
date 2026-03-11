@@ -28,15 +28,38 @@ local fn = vim.fn
 require("lazy").setup({
     -- automatically check for plugin updates
     checker = { enabled = true },
-    { "nvim-treesitter" },
     { "nvim-lua/plenary.nvim" },
     { "nvim-telescope/telescope.nvim" },
-    {
-        "nvim-treesitter/nvim-treesitter",
-    },
+      {
+    "nvim-treesitter/nvim-treesitter",
+    build = ":TSUpdate",
+    event = { "BufReadPost", "BufNewFile" },
+
+    config = function()
+      require("nvim-treesitter.config").setup({
+        ensure_installed = {
+          "javascript",
+          "typescript",
+          "rust",
+          "c",
+          "lua",
+          "vim",
+          "vimdoc",
+          "query",
+          "markdown",
+          "markdown_inline",
+          "scala",
+          "graphql",
+          "html",
+        },
+        highlight = { enable = true },
+        indent = { enable = true },
+        auto_install = true,
+      })
+    end,
+  },
     -- Icons for file explorer
     { "nvim-tree/nvim-web-devicons", opts = {} },
-    { "nvim-treesitter/playground" },
     {
         "ThePrimeagen/harpoon",
         branch = "harpoon2",
@@ -326,7 +349,7 @@ require("lazy").setup({
                     local escaped_root_dir = vim.fn.shellescape(root_dir)
 
                     local cmd = string.format(
-                        "rg --ignore-case --fixed-strings --color=always --line-number --column --no-heading %s -g '*' --glob '!**/*bazel*/**' --glob '!**/desktop/generated/**' --glob '!**/tmp/**' --glob '!node_modules' --glob '!**/*git*/**' --glob '!**/*3rdparty*/**' --glob '!**/*.tools*/**' --glob '!**/*demo_files*/**' --glob '!**/*-lock*/**' --glob '!**/*metals*/**' --glob '!**/*_test*' %s",
+                        "rg --ignore-case --fixed-strings --color=always --line-number --column --no-heading %s -g '*' --glob '!**/*bazel*/**' --glob '!**/desktop/generated/**' --glob '!**/tmp/**' --glob '!node_modules' --glob '!**/*git*/**' --glob '!**/*3rdparty*/**' --glob '!**/*.tools*/**' --glob '!**/*demo_files*/**' --glob '!**/*-lock*/**' --glob '!**/*metals*/**' --glob '!**/*_test*' --glob '!**/*.spec*' %s",
                         escaped_query, escaped_root_dir
                     )
 
@@ -341,7 +364,7 @@ require("lazy").setup({
                         if key == 'ctrl-q' then
                             -- Send all results to quickfix
                             local qf_cmd = string.format(
-                                "rg --vimgrep --ignore-case --fixed-strings %s -g '*' --glob '!**/*bazel*/**' --glob '!**/desktop/generated/**' --glob '!**/tmp/**' --glob '!node_modules' --glob '!**/*git*/**' --glob '!**/*3rdparty*/**' --glob '!**/*.tools*/**' --glob '!**/*demo_files*/**' --glob '!**/*-lock*/**' --glob '!**/*metals*/**' --glob '!**/*_test*' %s",
+                                "rg --vimgrep --ignore-case --fixed-strings %s -g '*' --glob '!**/*bazel*/**' --glob '!**/desktop/generated/**' --glob '!**/tmp/**' --glob '!node_modules' --glob '!**/*git*/**' --glob '!**/*3rdparty*/**' --glob '!**/*.tools*/**' --glob '!**/*demo_files*/**' --glob '!**/*-lock*/**' --glob '!**/*metals*/**' --glob '!**/*_test*' --glob '!**/*.spec*' %s",
                                 escaped_query, escaped_root_dir
                             )
                             vim.fn.setqflist({}, 'r')

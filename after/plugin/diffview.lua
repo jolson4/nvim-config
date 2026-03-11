@@ -7,8 +7,8 @@ vim.keymap.set("n", "<leader>bd", "<cmd>DiffviewFileHistory<CR>", { noremap = tr
 -- See changes only for current buffer
 vim.keymap.set("n", "<leader>bh", "<cmd>DiffviewFileHistory %<CR>", { noremap = true, silent = true });
 
--- See diff'd files between current branch and next-master
-vim.keymap.set("n", "<leader>dm", [[:DiffviewOpen next-master..HEAD<CR>]])
+-- See diff'd files between current branch and dev
+vim.keymap.set("n", "<leader>dm", [[:DiffviewOpen dev..HEAD<CR>]])
 
 -- See diff'd files between current branch and parent branch
 vim.keymap.set('n', '<leader>gd', function()

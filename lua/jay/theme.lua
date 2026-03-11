@@ -7,13 +7,13 @@ solarized.setup({
 })
 
 local function set_theme(mode)
-    if mode == "dark" then
-        vim.o.background = "dark"
-        vim.cmd("colorscheme catppuccin-mocha")
-    else
-        vim.o.background = "light"
-        vim.cmd("colorscheme solarized")
-    end
+    -- if mode == "dark" then
+    vim.o.background = "dark"
+    vim.cmd("colorscheme catppuccin-mocha")
+    -- else
+    --     vim.o.background = "light"
+    --     vim.cmd("colorscheme solarized")
+    -- end
 end
 
 local function detect_os_theme()
