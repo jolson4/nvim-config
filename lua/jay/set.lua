@@ -76,6 +76,101 @@ end
 
 vim.keymap.set('n', '<leader>gh', OpenGitHubFile, {})
 
+local function open_url(url)
+    if vim.ui and vim.ui.open then
+        vim.ui.open(url)
+        return
+    end
+
+    local opener
+    if vim.fn.has("macunix") == 1 then
+        opener = "open"
+    elseif vim.fn.has("win32") == 1 then
+        vim.fn.jobstart({ "cmd.exe", "/c", "start", url }, { detach = true })
+        return
+    else
+        opener = "xdg-open"
+    end
+
+    vim.fn.jobstart({ opener, url }, { detach = true })
+end
+
+local function open_github_commit_from_buffer()
+    local bufnr = vim.api.nvim_get_current_buf()
+    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+    for _, line in ipairs(lines) do
+        local commit = line:match("Commit:%s*([0-9a-fA-F]+)")
+        if commit and #commit >= 7 then
+            local url = "https://github.com/tryretool/retool_development/commit/" .. commit
+            open_url(url)
+            vim.notify("Opened " .. url)
+            return
+        end
+    end
+
+    vim.notify("No commit hash found (expected 'Commit: <sha>')", vim.log.levels.WARN)
+end
+
+local function get_git_root(path)
+    if vim.fs and vim.fs.root then
+        return vim.fs.root(path, { ".git" })
+    end
+
+    local out = vim.fn.systemlist({ "git", "rev-parse", "--show-toplevel" })
+    if vim.v.shell_error ~= 0 then
+        return nil
+    end
+    return out[1]
+end
+
+local function open_github_commit_for_cursor_line()
+    local file = vim.api.nvim_buf_get_name(0)
+    if file == "" then
+        vim.notify("No file path for current buffer", vim.log.levels.WARN)
+        return
+    end
+
+    local abs = vim.fn.fnamemodify(file, ":p")
+    local root = get_git_root(abs)
+    if not root or root == "" then
+        vim.notify("Not in a git repo (can't blame)", vim.log.levels.WARN)
+        return
+    end
+
+    root = root:gsub("/$", "")
+    local rel = abs
+    if abs:sub(1, #root + 1) == root .. "/" then
+        rel = abs:sub(#root + 2)
+    end
+
+    local lnum = vim.api.nvim_win_get_cursor(0)[1]
+    local out = vim.fn.systemlist({ "git", "-C", root, "blame", "-L", string.format("%d,%d", lnum, lnum), "--porcelain",
+        "--", rel })
+    if vim.v.shell_error ~= 0 or not out or not out[1] then
+        vim.notify("git blame failed for current line", vim.log.levels.WARN)
+        return
+    end
+
+    local commit = out[1]:match("^([0-9a-fA-F]+)%s")
+    if not commit or #commit < 7 then
+        vim.notify("Couldn't parse commit from git blame output", vim.log.levels.WARN)
+        return
+    end
+
+    if commit == string.rep("0", #commit) then
+        vim.notify("Line not committed yet", vim.log.levels.WARN)
+        return
+    end
+
+    local url = "https://github.com/tryretool/retool_development/commit/" .. commit
+    open_url(url)
+    vim.notify("Opened " .. url)
+end
+
+vim.keymap.set("n", "<leader>cm", open_github_commit_from_buffer, { desc = "Open commit on GitHub" })
+vim.keymap.set("n", "<leader>gc", open_github_commit_for_cursor_line, { desc = "Open GitHub commit for line" })
+
 -- Rename variable across files
 vim.keymap.set("n", "<leader>r", vim.lsp.buf.rename, { noremap = true, silent = true })
 
