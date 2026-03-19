@@ -277,7 +277,7 @@ require("lazy").setup({
     },
 
     -- Git blame
-    { "rhysd/git-messenger.vim" },
+    { "rhysd/git-messenger.vim", cmd = { "GitMessenger" } },
 
     -- Color Themes
     { "AlexvZyl/nordic.nvim", lazy = true },
@@ -521,7 +521,33 @@ require("lazy").setup({
     {
         {
             'stevearc/conform.nvim',
-            opts = {},
+            event = { 'BufWritePre' },
+            keys = {
+                {
+                    '<leader>f',
+                    function()
+                        require('conform').format({ async = true })
+                    end,
+                    desc = 'Format buffer',
+                },
+            },
+            opts = {
+                format_on_save = {
+                    lsp_format = 'fallback',
+                },
+                formatters_by_ft = {
+                    javascript = { 'prettier' },
+                    typescript = { 'prettier' },
+                    javascriptreact = { 'prettier' },
+                    typescriptreact = { 'prettier' },
+                    json = { 'prettier' },
+                    css = { 'prettier' },
+                    yaml = { 'prettier' },
+                    html = { 'prettier' },
+                    markdown = { 'prettier' },
+                    lua = { 'lsp' },
+                },
+            },
         }
     },
     {
@@ -533,6 +559,22 @@ require("lazy").setup({
     -- Save sessions
     {
         'stevearc/resession.nvim',
+        keys = {
+            { '<leader>ss', function() require('resession').save() end },
+            { '<leader>sl', function() require('resession').load() end },
+            { '<leader>sd', function() require('resession').delete() end },
+        },
+        opts = {},
+        config = function(_, opts)
+            local resession = require('resession')
+            resession.setup(opts)
+
+            vim.api.nvim_create_autocmd('VimLeavePre', {
+                callback = function()
+                    resession.save('last')
+                end,
+            })
+        end,
     },
 
     {

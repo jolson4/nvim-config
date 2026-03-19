@@ -255,7 +255,7 @@ vim.keymap.set("n", "<leader>re", function()
 end, { desc = "Reload all open buffers" })
 
 -- Directly open graphql_schema.graphql
-vim.keymap.set("n", "<leader>gs", function()
+vim.keymap.set("n", "<leader>gq", function()
     local path = vim.fn.expand(
         "/Users/jonathanolson/sandbox/asana/asana2/asana/data_model/generated/graphql_schema.graphql")
     if vim.fn.filereadable(path) == 1 then
