@@ -29,41 +29,120 @@ require("lazy").setup({
     -- automatically check for plugin updates
     checker = { enabled = true },
     { "nvim-lua/plenary.nvim" },
-    { "nvim-telescope/telescope.nvim" },
-      {
-    "nvim-treesitter/nvim-treesitter",
-    build = ":TSUpdate",
-    event = { "BufReadPost", "BufNewFile" },
-
-    config = function()
-      require("nvim-treesitter.config").setup({
-        ensure_installed = {
-          "javascript",
-          "typescript",
-          "rust",
-          "c",
-          "lua",
-          "vim",
-          "vimdoc",
-          "query",
-          "markdown",
-          "markdown_inline",
-          "scala",
-          "graphql",
-          "html",
+    {
+        "nvim-telescope/telescope.nvim",
+        cmd = "Telescope",
+        keys = {
+            { '<leader>pf', function() require('telescope.builtin').find_files() end },
+            { '<C-p>', function() require('telescope.builtin').git_files() end },
+            {
+                '<leader>ps',
+                function()
+                    require('telescope.builtin').grep_string({ search = vim.fn.input("Grep > ") })
+                end,
+            },
         },
-        highlight = { enable = true },
-        indent = { enable = true },
-        auto_install = true,
-      })
-    end,
-  },
+        config = function()
+            require('telescope').setup({
+                defaults = {
+                    file_sorter = require('telescope.sorters').get_fuzzy_file,
+                    file_previewer = require('telescope.previewers').vim_buffer_cat.new,
+                    generic_sorter = require('telescope.sorters').get_generic_fuzzy_sorter,
+                    file_ignore_patterns = {
+                        'node_modules',
+                        'dist',
+                        '.git',
+                    },
+                },
+                pickers = {
+                    find_files = {
+                        find_command = { 'rg', '--files', '--hidden', '--glob', '!**/.git/*' },
+                    },
+                },
+            })
+        end,
+    },
+    {
+        "nvim-treesitter/nvim-treesitter",
+        build = ":TSUpdate",
+        event = { "BufReadPost", "BufNewFile" },
+        config = function()
+            require("nvim-treesitter.config").setup({
+                ensure_installed = {
+                    "javascript",
+                    "typescript",
+                    "rust",
+                    "c",
+                    "lua",
+                    "vim",
+                    "vimdoc",
+                    "query",
+                    "markdown",
+                    "markdown_inline",
+                    "scala",
+                    "graphql",
+                    "html",
+                },
+                highlight = { enable = true },
+                indent = { enable = true },
+                auto_install = true,
+            })
+        end,
+    },
     -- Icons for file explorer
     { "nvim-tree/nvim-web-devicons", opts = {} },
     {
         "ThePrimeagen/harpoon",
         branch = "harpoon2",
-        dependencies = { "nvim-lua/plenary.nvim" }
+        dependencies = { "nvim-lua/plenary.nvim" },
+        keys = {
+            {
+                '<leader>a',
+                function()
+                    require('harpoon'):list():add()
+                end,
+            },
+            {
+                '<C-e>',
+                function()
+                    local harpoon = require('harpoon')
+                    harpoon.ui:toggle_quick_menu(harpoon:list())
+                end,
+            },
+            {
+                '<C-h>',
+                function()
+                    require('harpoon'):list():select(1)
+                end,
+            },
+            {
+                '<C-j>',
+                function()
+                    require('harpoon'):list():select(2)
+                end,
+            },
+            {
+                '<C-k>',
+                function()
+                    require('harpoon'):list():select(3)
+                end,
+            },
+            {
+                '<C-l>',
+                function()
+                    require('harpoon'):list():select(4)
+                end,
+            },
+        },
+        config = function()
+            local harpoon = require("harpoon")
+
+            harpoon:setup({
+                menu = {
+                    width = vim.api.nvim_win_get_width(0) - 4,
+                },
+            })
+        end,
     },
     { "mbbill/undotree", cmd = { "UndotreeToggle", "UndotreeShow", "UndotreeHide", "UndotreeFocus" } },
     {
@@ -103,10 +182,11 @@ require("lazy").setup({
         end
     },
     { "hrsh7th/cmp-nvim-lsp" },
-    { "github/copilot.vim" },
+    { "github/copilot.vim", event = "InsertEnter" },
     { "folke/todo-comments.nvim", event = "VeryLazy", opts = {} },
     {
         "folke/zen-mode.nvim",
+        cmd = "ZenMode",
         opts = {
             window = {
                 width = 200,

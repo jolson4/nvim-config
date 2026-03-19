@@ -50,11 +50,11 @@ vim.api.nvim_set_keymap("n", "<leader>bc", ":BCommits<CR>", { noremap = true, si
 vim.api.nvim_set_keymap('n', '<leader>ff', ':Files<CR>', { noremap = true, silent = true })
 
 
--- Map <leader>fg to run RgExact with the word under the cursor.
+-- Map <leader>fg to run exact search with the word under the cursor.
 vim.api.nvim_set_keymap(
     "n",
     "<leader>fg",
-    ":RgExact <C-R>=expand('<cword>')<CR><CR>",
+    ":RgExactExcludingTests <C-R>=expand('<cword>')<CR><CR>",
     { noremap = true, silent = true }
 )
 
