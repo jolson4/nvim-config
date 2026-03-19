@@ -51,7 +51,90 @@ local lsp_attach = function(client, bufnr)
     local opts = { buffer = bufnr }
 
     vim.keymap.set('n', 'K', '<cmd>lua vim.lsp.buf.hover()<cr>', opts)
-    vim.keymap.set('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<cr>', opts)
+    vim.keymap.set('n', 'gd', function()
+        local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
+
+        vim.lsp.buf_request_all(bufnr, 'textDocument/definition', params, function(results)
+            local locations = {}
+
+            for client_id, response in pairs(results or {}) do
+                local result = response.result
+                local response_client = vim.lsp.get_client_by_id(client_id)
+                local offset_encoding = response_client and response_client.offset_encoding or client.offset_encoding
+
+                if result then
+                    if not vim.islist(result) then
+                        result = { result }
+                    end
+
+                    for _, location in ipairs(result) do
+                        local uri = location.uri or location.targetUri
+                        local range = location.range or location.targetSelectionRange
+
+                        if uri and range then
+                            local filename = vim.uri_to_fname(uri)
+                            table.insert(locations, {
+                                filename = filename,
+                                location = {
+                                    uri = uri,
+                                    range = range,
+                                },
+                                offset_encoding = offset_encoding,
+                            })
+                        end
+                    end
+                end
+            end
+
+            if vim.tbl_isempty(locations) then
+                vim.notify('No definition found', vim.log.levels.INFO)
+                return
+            end
+
+            local seen = {}
+            local deduped_locations = {}
+            for _, item in ipairs(locations) do
+                local start = item.location.range.start
+                local key = table.concat({ item.filename, start.line, start.character }, ':')
+                if not seen[key] then
+                    seen[key] = true
+                    table.insert(deduped_locations, item)
+                end
+            end
+
+            table.sort(deduped_locations, function(a, b)
+                local function score(item)
+                    local score = 0
+                    if item.filename:match('/node_modules/') then
+                        score = score - 100
+                    end
+                    if item.filename:match('%.d%.ts$') then
+                        score = score - 50
+                    end
+                    if item.filename:match('[/\\]react[/\\]') or item.filename:match('[@]types[/\\]react') then
+                        score = score - 25
+                    end
+                    if item.filename:sub(1, #vim.loop.cwd()) == vim.loop.cwd() then
+                        score = score + 10
+                    end
+                    return score
+                end
+
+                local score_a = score(a)
+                local score_b = score(b)
+                if score_a == score_b then
+                    return a.filename < b.filename
+                end
+                return score_a > score_b
+            end)
+
+            vim.lsp.util.jump_to_location(deduped_locations[1].location, deduped_locations[1].offset_encoding, true)
+
+            if #deduped_locations > 1 then
+                vim.notify('Jumped to preferred definition', vim.log.levels.INFO)
+            end
+        end)
+    end, opts)
     vim.keymap.set('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<cr>', opts)
     vim.keymap.set('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<cr>', opts)
     vim.keymap.set('n', 'go', '<cmd>lua vim.lsp.buf.type_definition()<cr>', opts)
