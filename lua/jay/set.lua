@@ -32,10 +32,17 @@ vim.opt.diffopt:append("iwhite")
 -- Don't include `l` format option since it forces a line wrap
 vim.opt.formatoptions = "jcroq"
 
--- Fold based on syntax
+-- Fold based on syntax by default
 vim.opt.foldmethod = "syntax"
 vim.opt.foldlevelstart = 99
 vim.opt.foldenable = true
+
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+    callback = function()
+        vim.opt_local.foldmethod = "indent"
+    end,
+})
 
 -- Blinking cursor
 vim.opt.guicursor = "n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,a:blinkwait700-blinkoff400-blinkon250-Cursor/lCursor"
@@ -162,31 +169,6 @@ vim.keymap.set("n", "<leader>gc", open_github_commit_for_cursor_line, { desc = "
 
 -- Rename variable across files
 vim.keymap.set("n", "<leader>r", vim.lsp.buf.rename, { noremap = true, silent = true })
-
--- Show errors in a floating window
-local function show_output(title, lines)
-    local buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-
-    local width = math.floor(vim.o.columns * 0.8)
-    local height = math.floor(vim.o.lines * 0.6)
-    local row = math.floor((vim.o.lines - height) / 2)
-    local col = math.floor((vim.o.columns - width) / 2)
-
-    local win_opts = {
-        style = "minimal",
-        relative = "editor",
-        width = width,
-        height = height,
-        row = row,
-        col = col,
-        border = "rounded",
-        title = title,
-        title_pos = "center",
-    }
-
-    vim.api.nvim_open_win(buf, true, win_opts)
-end
 
 -- Generate codegen files
 vim.api.nvim_create_user_command("GenerateImports", function()

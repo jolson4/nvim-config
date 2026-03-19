@@ -43,30 +43,26 @@ vim.keymap.set("n", "<leader>h", [[:History<CR>]])
 -- Ignore case with fzf
 vim.env.FZF_DEFAULT_OPTS = "--ignore-case"
 
--- See commits affecting current file
-vim.api.nvim_set_keymap("n", "<leader>bc", ":BCommits<CR>", { noremap = true, silent = true })
-
 -- Keybindings for FZF commands
-vim.api.nvim_set_keymap('n', '<leader>ff', ':Files<CR>', { noremap = true, silent = true })
+vim.keymap.set('n', '<leader>ff', '<cmd>Files<CR>', { silent = true })
 
 
 -- Map <leader>fg to run exact search with the word under the cursor.
-vim.api.nvim_set_keymap(
+vim.keymap.set(
     "n",
     "<leader>fg",
     ":RgExactExcludingTests <C-R>=expand('<cword>')<CR><CR>",
-    { noremap = true, silent = true }
+    { silent = true }
 )
 
 -- Search for text, project-wide, with regex
-vim.api.nvim_set_keymap("n", "<leader>fir", ":Rg<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>fir", "<cmd>Rg<CR>", { silent = true })
 
 -- Search for text, project-wide, without regex, with tests included
-vim.api.nvim_set_keymap("n", "<leader>fit", ":RgIgnoreCaseFixedStrings<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>fit", "<cmd>RgIgnoreCaseFixedStrings<CR>", { silent = true })
 
 -- Search for text, project-wide, without regex, with tests excluded
-vim.api.nvim_set_keymap("n", "<leader>fif", ":RgIgnoreCaseFixedStringsExcludingTests<CR>",
-    { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>fif", "<cmd>RgIgnoreCaseFixedStringsExcludingTests<CR>", { silent = true })
 
 -- Search for files that import the current file
 vim.keymap.set("n", "<leader>imp", function()
@@ -85,14 +81,14 @@ vim.keymap.set("n", "<leader>imp", function()
 end, { desc = "Find imports of current file", silent = true })
 
 -- Source config init.lua file
-vim.api.nvim_set_keymap("n", "<leader>so", ":luafile ~/.config/nvim/init.lua<CR>", { noremap = true, silent = true })
+vim.keymap.set("n", "<leader>so", "<cmd>luafile ~/.config/nvim/init.lua<CR>", { silent = true })
 
 -- See full error message
-vim.api.nvim_set_keymap(
+vim.keymap.set(
     "n",
     "<leader>e",
-    "<cmd>lua vim.diagnostic.open_float()<CR>",
-    { noremap = true, silent = true }
+    vim.diagnostic.open_float,
+    { silent = true }
 )
 
 -- Add tab

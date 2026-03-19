@@ -144,10 +144,20 @@ require("lazy").setup({
             })
         end,
     },
-    { "mbbill/undotree", cmd = { "UndotreeToggle", "UndotreeShow", "UndotreeHide", "UndotreeFocus" } },
+    {
+        "mbbill/undotree",
+        cmd = { "UndotreeToggle", "UndotreeShow", "UndotreeHide", "UndotreeFocus" },
+        keys = {
+            { '<leader>u', '<cmd>UndotreeToggle<CR>', silent = true },
+        },
+    },
     {
         "tpope/vim-fugitive",
         cmd = { "Git", "G", "Gdiffsplit", "Gvdiffsplit", "Gwrite", "Gread", "GBrowse", "BCommits" },
+        keys = {
+            { '<leader>gs', '<cmd>Git<CR>', silent = true },
+            { '<leader>bc', '<cmd>BCommits<CR>', silent = true },
+        },
     },
     {
         "hrsh7th/nvim-cmp",
@@ -216,6 +226,21 @@ require("lazy").setup({
         "sindrets/diffview.nvim",
         cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory" },
         requires = "nvim-lua/plenary.nvim",
+        keys = {
+            { '<leader>do', '<cmd>DiffviewOpen<CR>', silent = true },
+            { '<leader>dc', '<cmd>DiffviewClose<CR>', silent = true },
+            { '<leader>bd', '<cmd>DiffviewFileHistory<CR>', silent = true },
+            { '<leader>bh', '<cmd>DiffviewFileHistory %<CR>', silent = true },
+            { '<leader>dm', '<cmd>DiffviewOpen dev..HEAD<CR>', silent = true },
+            {
+                '<leader>gd',
+                function()
+                    local parent = vim.fn.system('gt parent'):gsub('\n', '')
+                    vim.cmd('DiffviewOpen ' .. parent)
+                end,
+                silent = true,
+            },
+        },
         config = function()
             require('diffview').setup({
                 enhanced_diff_hl = true,
@@ -255,8 +280,8 @@ require("lazy").setup({
     { "rhysd/git-messenger.vim" },
 
     -- Color Themes
-    { "AlexvZyl/nordic.nvim" },
-    { "catppuccin/nvim" },
+    { "AlexvZyl/nordic.nvim", lazy = true },
+    { "catppuccin/nvim", priority = 1000 },
 
     -- fzf for fast file search
     {
@@ -517,5 +542,6 @@ require("lazy").setup({
 
     {
         'maxmx03/solarized.nvim',
+        lazy = true,
     }
 })
