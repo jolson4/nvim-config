@@ -1,5 +1,3 @@
-vim.opt.guicursor = ""
-
 vim.opt.nu = true
 vim.opt.relativenumber = true
 
@@ -61,21 +59,6 @@ vim.keymap.set("n", "<leader>cpr", ":CopyRelativePath<CR>", { noremap = true, si
 -- Hide the 80-character column indicator
 vim.opt.colorcolumn = ""
 
--- Open file in GitHub; got this from Claude
-function OpenGitHubFile()
-    local relative_path = vim.fn.expand('%:.')
-
-    local url = string.format('https://github.com/tryretool/retool_development/blob/dev/%s',
-        relative_path
-    )
-    -- DEBUG
-    -- vim.notify("Debug: url = " .. url)
-
-    vim.fn.system('open ' .. url)
-end
-
-vim.keymap.set('n', '<leader>gh', OpenGitHubFile, {})
-
 local function open_url(url)
     if vim.ui and vim.ui.open then
         vim.ui.open(url)
@@ -94,6 +77,12 @@ local function open_url(url)
 
     vim.fn.jobstart({ opener, url }, { detach = true })
 end
+
+vim.keymap.set('n', '<leader>gh', function()
+    local relative_path = vim.fn.expand('%:.')
+    local url = string.format('https://github.com/tryretool/retool_development/blob/dev/%s', relative_path)
+    open_url(url)
+end, {})
 
 local function open_github_commit_from_buffer()
     local bufnr = vim.api.nvim_get_current_buf()

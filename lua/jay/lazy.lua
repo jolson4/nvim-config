@@ -65,8 +65,11 @@ require("lazy").setup({
         branch = "harpoon2",
         dependencies = { "nvim-lua/plenary.nvim" }
     },
-    { "mbbill/undotree" },
-    { "tpope/vim-fugitive" },
+    { "mbbill/undotree", cmd = { "UndotreeToggle", "UndotreeShow", "UndotreeHide", "UndotreeFocus" } },
+    {
+        "tpope/vim-fugitive",
+        cmd = { "Git", "G", "Gdiffsplit", "Gvdiffsplit", "Gwrite", "Gread", "GBrowse", "BCommits" },
+    },
     {
         "hrsh7th/nvim-cmp",
         event = "InsertEnter",
@@ -101,7 +104,7 @@ require("lazy").setup({
     },
     { "hrsh7th/cmp-nvim-lsp" },
     { "github/copilot.vim" },
-    { "folke/todo-comments.nvim", opts = {} },
+    { "folke/todo-comments.nvim", event = "VeryLazy", opts = {} },
     {
         "folke/zen-mode.nvim",
         opts = {
@@ -114,6 +117,7 @@ require("lazy").setup({
     -- Add gutter signs for git
     {
         "lewis6991/gitsigns.nvim",
+        event = { "BufReadPre", "BufNewFile" },
         config = function()
             require('gitsigns').setup({
                 signs = {
@@ -130,6 +134,7 @@ require("lazy").setup({
     -- Split view in git
     {
         "sindrets/diffview.nvim",
+        cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory" },
         requires = "nvim-lua/plenary.nvim",
         config = function()
             require('diffview').setup({
@@ -423,7 +428,6 @@ require("lazy").setup({
     -- Save sessions
     {
         'stevearc/resession.nvim',
-        opts = {},
     },
 
     {
