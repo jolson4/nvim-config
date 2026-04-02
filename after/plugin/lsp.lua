@@ -50,6 +50,28 @@ vim.diagnostic.config({
 local lsp_attach = function(client, bufnr)
     local opts = { buffer = bufnr }
 
+    local function show_references_excluding_specs()
+        vim.lsp.buf.references(nil, {
+            on_list = function(ref_opts)
+                local items = vim.tbl_filter(function(item)
+                    local filename = item.filename or ""
+                    return not filename:match("[/\\]spec[/\\]") and not filename:match("%.spec%.[^/\\]+$")
+                end, ref_opts.items or {})
+
+                if vim.tbl_isempty(items) then
+                    vim.notify('No non-spec references found', vim.log.levels.INFO)
+                    return
+                end
+
+                vim.fn.setqflist({}, ' ', {
+                    title = ref_opts.title or 'References',
+                    items = items,
+                })
+                vim.cmd('copen')
+            end,
+        })
+    end
+
     vim.keymap.set('n', 'K', '<cmd>lua vim.lsp.buf.hover()<cr>', opts)
     vim.keymap.set('n', 'gd', function()
         local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
@@ -138,7 +160,7 @@ local lsp_attach = function(client, bufnr)
     vim.keymap.set('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<cr>', opts)
     vim.keymap.set('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<cr>', opts)
     vim.keymap.set('n', 'go', '<cmd>lua vim.lsp.buf.type_definition()<cr>', opts)
-    vim.keymap.set('n', 'gr', '<cmd>lua vim.lsp.buf.references()<cr>', opts)
+    vim.keymap.set('n', 'gr', show_references_excluding_specs, opts)
     vim.keymap.set('n', 'gs', '<cmd>lua vim.lsp.buf.signature_help()<cr>', opts)
     vim.keymap.set('n', '<F2>', '<cmd>lua vim.lsp.buf.rename()<cr>', opts)
     vim.keymap.set({ 'n', 'x' }, '<leader>for', '<cmd>lua vim.lsp.buf.format({async = true})<cr>', opts)
