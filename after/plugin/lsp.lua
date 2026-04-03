@@ -216,13 +216,6 @@ vim.lsp.config('graphql', {
     on_attach = lsp_attach,
     filetypes = { "typescript" },
     root_dir = require("lspconfig.util").root_pattern(".graphqlrc*", "graphql.config.*", "package.json"),
-    settings = {
-        graphql = {
-            introspection = {
-                file = "**/*{_fragment_defs,_def}.ts"
-            }
-        }
-    }
 })
 
 -- TypeScript/JavaScript (using tsgo)
