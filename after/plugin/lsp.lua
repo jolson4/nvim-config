@@ -233,7 +233,7 @@ vim.lsp.config('tsgo', {
         lsp_attach(client, bufnr)
     end,
     cmd = { "tsgo", "--lsp", "--stdio" },
-    filetypes = { "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact", "typescript.tsx" },
+    filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
     root_markers = { ".git", "tsconfig.json", "package.json" },
 })
 
