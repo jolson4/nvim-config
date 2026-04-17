@@ -1,3 +1,13 @@
+vim.cmd.syntax("enable")
+
+vim.g.markdown_fenced_languages = {
+    "ts=typescript",
+    "tsx=typescriptreact",
+    "js=javascript",
+    "jsx=javascriptreact",
+    "shell=sh",
+}
+
 vim.opt.nu = true
 vim.opt.relativenumber = true
 

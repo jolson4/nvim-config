@@ -156,6 +156,7 @@ require("lazy").setup({
         cmd = { "Git", "G", "Gdiffsplit", "Gvdiffsplit", "Gwrite", "Gread", "GBrowse", "BCommits" },
         keys = {
             { '<leader>gs', '<cmd>Git<CR>', silent = true },
+            { '<leader>gb', '<cmd>Git blame --date=relative<CR>', silent = true },
             { '<leader>bc', '<cmd>BCommits<CR>', silent = true },
         },
     },
@@ -208,8 +209,13 @@ require("lazy").setup({
     {
         "lewis6991/gitsigns.nvim",
         event = { "BufReadPre", "BufNewFile" },
+        keys = {
+            { '<leader>tb', '<cmd>Gitsigns toggle_current_line_blame<CR>', silent = true },
+        },
         config = function()
             require('gitsigns').setup({
+                current_line_blame = true,
+                current_line_blame_formatter = '<author>, <author_time:%R> - <summary>',
                 signs = {
                     add          = { text = '│' },
                     change       = { text = '│' },

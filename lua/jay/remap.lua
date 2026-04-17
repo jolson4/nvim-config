@@ -107,6 +107,14 @@ vim.keymap.set("n", "<leader>Y", [[gg"+yG]])
 -- Paste from clipboard, replacing entire file's contents
 vim.keymap.set("n", "<leader>R", [[gg"_dG"+p]])
 
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "qf",
+    callback = function(event)
+        vim.keymap.set("n", "<C-w>k", "<C-w>p", { buffer = event.buf, silent = true })
+        vim.keymap.set("n", "<C-w><Up>", "<C-w>p", { buffer = event.buf, silent = true })
+    end,
+})
+
 -- Show man page for word under cursor in floating window
 vim.keymap.set("n", "<leader>m", function()
     local word = vim.fn.expand("<cword>")
