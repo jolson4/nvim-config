@@ -83,7 +83,10 @@ require("lazy").setup({
                     "graphql",
                     "html",
                 },
-                highlight = { enable = true },
+                highlight = {
+                    enable = true,
+                    additional_vim_regex_highlighting = { "markdown", "markdown_inline" },
+                },
                 indent = { enable = true },
                 auto_install = true,
             })

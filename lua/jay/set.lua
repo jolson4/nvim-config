@@ -2,10 +2,16 @@ vim.cmd.syntax("enable")
 
 vim.g.markdown_fenced_languages = {
     "ts=typescript",
+    "typescript=typescript",
     "tsx=typescriptreact",
+    "typescriptreact=typescriptreact",
     "js=javascript",
+    "javascript=javascript",
     "jsx=javascriptreact",
+    "javascriptreact=javascriptreact",
     "shell=sh",
+    "bash=sh",
+    "zsh=sh",
 }
 
 vim.opt.nu = true

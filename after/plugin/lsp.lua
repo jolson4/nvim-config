@@ -3,32 +3,241 @@
 ---
 local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
--- Configure LSP popup window borders
-vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(vim.lsp.handlers.hover, {
-    border = "rounded",
-    max_width = 80,
-    max_height = 30,
-})
-
--- Override floating preview to add padding and rounded borders
-local orig_util_open_floating_preview = vim.lsp.util.open_floating_preview
-function vim.lsp.util.open_floating_preview(contents, syntax, opts, ...)
-    opts = opts or {}
-    opts.border = opts.border or "rounded"
-
-    -- Add vertical padding (~10px = 2 lines top/bottom)
-    -- Note: horizontal padding breaks markdown code fence rendering
-    local padded_contents = { "", "" } -- top padding
-
-    for _, line in ipairs(contents) do
-        table.insert(padded_contents, line)
+local function markdownify_hover(result, bufnr)
+    if not (result and result.contents) then
+        return result
     end
 
-    -- bottom padding
-    table.insert(padded_contents, "")
-    table.insert(padded_contents, "")
+    local ft = vim.bo[bufnr].filetype
+    local hover_filetypes = {
+        javascript = true,
+        javascriptreact = true,
+        typescript = true,
+        typescriptreact = true,
+    }
 
-    return orig_util_open_floating_preview(padded_contents, syntax, opts, ...)
+    if not hover_filetypes[ft] then
+        return result
+    end
+
+    local lines = vim.lsp.util.convert_input_to_markdown_lines(result.contents)
+    if vim.tbl_isempty(lines) then
+        return result
+    end
+
+    for _, line in ipairs(lines) do
+        if line:match('^```') then
+            return result
+        end
+    end
+
+    local signature_lines = {}
+    local docs_start
+
+    for i, line in ipairs(lines) do
+        if line == '' then
+            docs_start = i + 1
+            break
+        end
+        table.insert(signature_lines, line)
+    end
+
+    if vim.tbl_isempty(signature_lines) then
+        return result
+    end
+
+    local markdown_lines = { '```' .. ft }
+    vim.list_extend(markdown_lines, signature_lines)
+    table.insert(markdown_lines, '```')
+
+    if docs_start and docs_start <= #lines then
+        table.insert(markdown_lines, '')
+        vim.list_extend(markdown_lines, vim.list_slice(lines, docs_start))
+    end
+
+    return {
+        contents = {
+            kind = 'markdown',
+            value = table.concat(markdown_lines, '\n'),
+        },
+    }
+end
+
+local function extract_single_fenced_block(result, bufnr)
+    if not (result and result.contents) then
+        return nil
+    end
+
+    local lines = vim.lsp.util.convert_input_to_markdown_lines(result.contents)
+    if vim.tbl_isempty(lines) or #lines < 3 then
+        return nil
+    end
+
+    local first = lines[1]
+    local last = lines[#lines]
+    local lang = first:match('^```%s*([%w_+-]+)%s*$')
+    if not lang or last ~= '```' then
+        return nil
+    end
+
+    for i = 2, #lines - 1 do
+        if lines[i]:match('^```') then
+            return nil
+        end
+    end
+
+    local syntax_map = {
+        ts = 'typescript',
+        tsx = 'typescriptreact',
+        typescript = 'typescript',
+        typescriptreact = 'typescriptreact',
+        js = 'javascript',
+        jsx = 'javascriptreact',
+        javascript = 'javascript',
+        javascriptreact = 'javascriptreact',
+    }
+
+    local syntax = syntax_map[lang] or vim.bo[bufnr].filetype
+    return {
+        contents = vim.list_slice(lines, 2, #lines - 1),
+        syntax = syntax,
+    }
+end
+
+local last_hover_debug = nil
+
+local function show_hover(client)
+    return function()
+    local bufnr = vim.api.nvim_get_current_buf()
+    local params = vim.lsp.util.make_position_params(0, client and client.offset_encoding)
+    local config = {
+        border = 'rounded',
+        max_width = 80,
+        max_height = 30,
+        focus_id = 'textDocument/hover',
+    }
+
+        vim.lsp.buf_request(bufnr, 'textDocument/hover', params, function(err, result, ctx)
+            if err then
+                vim.notify(err.message or 'Hover request failed', vim.log.levels.ERROR)
+                return
+            end
+
+            if vim.api.nvim_get_current_buf() ~= bufnr then
+                return
+            end
+
+            if not (result and result.contents) then
+                vim.notify('No information available')
+                return
+            end
+
+            local fenced_block = extract_single_fenced_block(result, bufnr)
+            if fenced_block then
+                local float_buf, float_win = vim.lsp.util.open_floating_preview(fenced_block.contents, fenced_block.syntax, config)
+                vim.bo[float_buf].filetype = fenced_block.syntax
+                last_hover_debug = {
+                    mode = 'show_hover_fenced_block',
+                    syntax = fenced_block.syntax,
+                    filetype = vim.bo[float_buf].filetype,
+                    contents = fenced_block.contents,
+                    win = float_win,
+                    buf = float_buf,
+                }
+                return
+            end
+
+            last_hover_debug = {
+                mode = 'show_hover_native',
+                result = result,
+                transformed = markdownify_hover(result, bufnr),
+            }
+            vim.lsp.handlers.hover(err, markdownify_hover(result, bufnr), ctx, config)
+        end)
+    end
+end
+
+vim.api.nvim_create_user_command('LspHoverDebug', function()
+    local params = vim.lsp.util.make_position_params()
+    vim.lsp.buf_request(0, 'textDocument/hover', params, function(err, result, ctx)
+        local path = vim.fn.stdpath('cache') .. '/lsp-hover-debug.lua'
+        local payload = {
+            err = err,
+            result = result,
+            bufnr = ctx and ctx.bufnr,
+            filetype = vim.bo[0].filetype,
+            transformed = markdownify_hover(result, vim.api.nvim_get_current_buf()),
+        }
+
+        vim.fn.writefile(vim.split(vim.inspect(payload), '\n', { plain = true }), path)
+        vim.notify('Wrote hover debug to ' .. path)
+    end)
+end, {})
+
+vim.api.nvim_create_user_command('LspFloatDebug', function()
+    local floats = {}
+
+    for _, win in ipairs(vim.api.nvim_list_wins()) do
+        local config = vim.api.nvim_win_get_config(win)
+        if config.relative ~= '' then
+            local buf = vim.api.nvim_win_get_buf(win)
+            local entry = {
+                win = win,
+                buf = buf,
+                relative = config.relative,
+                filetype = vim.bo[buf].filetype,
+                syntax = vim.bo[buf].syntax,
+                lines = vim.api.nvim_buf_get_lines(buf, 0, math.min(5, vim.api.nvim_buf_line_count(buf)), false),
+            }
+
+            vim.api.nvim_win_call(win, function()
+                entry.syn1 = vim.fn.synIDattr(vim.fn.synID(1, 1, 1), 'name')
+                entry.syn7 = vim.fn.synIDattr(vim.fn.synID(1, 7, 1), 'name')
+            end)
+
+            table.insert(floats, entry)
+        end
+    end
+
+    local path = vim.fn.stdpath('cache') .. '/lsp-float-debug.lua'
+    local payload = {
+        last_hover_debug = last_hover_debug,
+        floats = floats,
+    }
+
+    vim.fn.writefile(vim.split(vim.inspect(payload), '\n', { plain = true }), path)
+    vim.notify('Wrote float debug to ' .. path)
+end, {})
+
+-- Configure LSP popup window borders
+vim.lsp.handlers["textDocument/hover"] = function(err, result, ctx, config)
+    config = vim.tbl_extend('force', {
+        border = 'rounded',
+        max_width = 80,
+        max_height = 30,
+    }, config or {})
+
+    local fenced_block = extract_single_fenced_block(result, ctx.bufnr)
+    if fenced_block then
+        local float_buf, float_win = vim.lsp.util.open_floating_preview(fenced_block.contents, fenced_block.syntax, config)
+        vim.bo[float_buf].filetype = fenced_block.syntax
+        last_hover_debug = {
+            mode = 'fenced_block',
+            syntax = fenced_block.syntax,
+            filetype = vim.bo[float_buf].filetype,
+            contents = fenced_block.contents,
+            win = float_win,
+            buf = float_buf,
+        }
+        return float_buf, float_win
+    end
+
+    last_hover_debug = {
+        mode = 'native_hover',
+        result = result,
+        transformed = markdownify_hover(result, ctx.bufnr),
+    }
+    return vim.lsp.handlers.hover(err, markdownify_hover(result, ctx.bufnr), ctx, config)
 end
 
 vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
@@ -72,7 +281,7 @@ local lsp_attach = function(client, bufnr)
         })
     end
 
-    vim.keymap.set('n', 'K', '<cmd>lua vim.lsp.buf.hover()<cr>', opts)
+    vim.keymap.set('n', 'K', show_hover(client), opts)
     vim.keymap.set('n', 'gd', function()
         local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
 
