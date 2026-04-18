@@ -180,8 +180,44 @@ local function open_github_commit_for_cursor_line()
     vim.notify("Opened " .. url)
 end
 
+local function open_linear_ticket_for_cursor_line()
+    local line = vim.api.nvim_get_current_line()
+    local pattern = "%[([%a%d][%a%d]?[%a%d]?%-%d+)%]"
+    local cursor_col = vim.api.nvim_win_get_cursor(0)[2] + 1
+    local ticket_id
+    local search_start = 1
+
+    while true do
+        local start_col, end_col, match = line:find(pattern, search_start)
+        if not start_col then
+            break
+        end
+
+        if cursor_col >= start_col and cursor_col <= end_col then
+            ticket_id = match
+            break
+        end
+
+        if not ticket_id then
+            ticket_id = match
+        end
+
+        search_start = end_col + 1
+    end
+
+    if not ticket_id then
+        vim.notify("No Linear ticket ID found on current line", vim.log.levels.WARN)
+        return
+    end
+
+    local url = "https://linear.app/retool/issue/" .. ticket_id
+    open_url(url)
+    vim.notify("Opened " .. url)
+end
+
 vim.keymap.set("n", "<leader>cm", open_github_commit_from_buffer, { desc = "Open commit on GitHub" })
 vim.keymap.set("n", "<leader>gc", open_github_commit_for_cursor_line, { desc = "Open GitHub commit for line" })
+vim.keymap.set("n", "<leader>lin", open_linear_ticket_for_cursor_line, { desc = "Open Linear ticket for line" })
 
 -- Rename variable across files
 vim.keymap.set("n", "<leader>r", vim.lsp.buf.rename, { noremap = true, silent = true })
