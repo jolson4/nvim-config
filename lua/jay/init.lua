@@ -7,6 +7,7 @@ require("jay.lazy")
 require("jay.remap")
 require("jay.set")
 require("jay.theme")
+require("jay.statusline").setup()
 
 vim.opt.wildignore = {
     '*/tmp/*',
@@ -17,9 +18,6 @@ vim.opt.wildignore = {
     '*/dist/*',
     '*bazel*',
 }
-
--- Set custom statusline
-vim.o.statusline = "%f %h%m%r%=%-14.(%l,%c%V%) %P"
 
 vim.api.nvim_create_autocmd("FileType", {
     pattern = { "c", "h" },
