@@ -35,6 +35,10 @@ local function section(group, text)
     return table.concat({ "%#", group, "# ", text, " " })
 end
 
+local function truncation_point()
+    return "%#StatuslineMuted#%<"
+end
+
 local function branch_name()
     local gitsigns = vim.b.gitsigns_status_dict
     if gitsigns and gitsigns.head and gitsigns.head ~= "" then
@@ -105,7 +109,7 @@ local function diagnostic_counts()
     return table.concat(parts, "%#StatuslineMuted# ")
 end
 
-local function buffer_directory(width)
+local function buffer_directory()
     local path = vim.api.nvim_buf_get_name(0)
     if path == "" then
         return "[No Name]"
@@ -114,8 +118,6 @@ local function buffer_directory(width)
     local dir = fn.fnamemodify(path, ":~:.:h")
     if dir == "." or dir == "" then
         dir = fn.fnamemodify(fn.getcwd(), ":t")
-    elseif width < 120 then
-        dir = fn.pathshorten(dir)
     end
 
     return dir
@@ -174,11 +176,11 @@ function M.render()
         })
     end
 
-    local width = vim.api.nvim_win_get_width(0)
     local branch = branch_name()
     local left = {
         section(branch_highlight(branch), branch ~= "" and "git:" .. branch or ""),
-        section("StatuslineMuted", "dir:" .. buffer_directory(width)),
+        truncation_point(),
+        section("StatuslineMuted", "dir:" .. buffer_directory()),
         section("StatuslinePanel", filename()),
     }
 
@@ -193,7 +195,7 @@ function M.render()
         section("StatuslineMuted", diagnostic_counts()),
     }
 
-    if width >= 100 then
+    if vim.api.nvim_win_get_width(0) >= 100 then
         table.insert(right, section("StatuslinePanel", filetype_label()))
     end
 
